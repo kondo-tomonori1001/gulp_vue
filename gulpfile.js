@@ -1,8 +1,7 @@
-// 必要プラグインの読み込み 
+// ==== 必要プラグインの読み込み ====
 const gulp = require("gulp");
-const gulpIf = require('gulp-if');
 
-// ファイルのclean-up
+// ==== ファイルのclean-up ====
 const del = require('del');
 function clean(done){
   const distFiles = './dist/**/*';
@@ -10,7 +9,7 @@ function clean(done){
   done();
 }
 
-// Sassコンパイル
+// ==== Sassコンパイル ====
 const sass = require('gulp-sass');
 sass.compiler = require("dart-sass");
 const autoprefixer = require('autoprefixer');
@@ -61,7 +60,7 @@ function sassCompileBuild(){
 }
 exports.sassCompileBuild = sassCompileBuild;
 
-// CSS圧縮
+// ==== CSS圧縮 ====
 const cleancss = require('gulp-clean-css');
 function cssMinimum(){
   return(
@@ -76,20 +75,78 @@ function cssMinimum(){
 }
 exports.cssMinimum = cssMinimum;
 
-// webpackの設定ファイルの読み込み
+// ==== webpackの設定ファイルの読み込み ====
 const webpackStream = require("webpack-stream");
 const webpack = require("webpack");
 const webpackDev = require("./webpack.dev");
 const webpackProd = require("./webpack.prod");
 
+// 開発用
 const webpackDevTask = () => {
   return webpackStream(webpackDev, webpack)
-  .pipe(gulp.dest("dist"));
+  .pipe(gulp.dest("dist"))
+  .pipe(browserSync.reload({ stream: true }));
 }
+exports.webpackDevTask = webpackDevTask;
+
+// ビルド用
 const webpackProdTask = () => {
   return webpackStream(webpackProd, webpack)
   .pipe(gulp.dest("dist"));
 }
 
-exports.default = gulp.series(clean,webpackDevTask,sassCompile,cssMinimum);
-exports.build = gulp.series(clean,webpackProdTask,sassCompileBuild,cssMinimum);
+// ===== Copy =====
+function copy(){
+  return(
+    gulp
+      .src('src/**/*.+(inc|html|ico|json)')
+      .pipe(gulp.dest('./dist'))
+  )
+}
+exports.copy = copy;
+
+// ==== ローカルサーバー立ち上げ ====
+const browserSync = require('browser-sync').create(); 
+const connectSSI = require('connect-ssi');
+
+function browserSyncFunc(){
+  return(
+    browserSync.init({
+      server: {
+        baseDir: 'dist',
+        middleware: [
+          connectSSI({
+            ext: '.html',
+            baseDir: 'dist',
+          })
+        ]
+      },
+      open: 'external',
+      startPath: './',
+      online: true,
+      reloadOnRestart: true,
+    })
+  )
+}
+exports.browserSyncFunc = browserSyncFunc;
+
+// browserSync Reload
+function reload(done){
+  browserSync.reload();
+  done();
+}
+exports.reload = reload;
+
+// ==== watch ====
+function watch(){
+  // html
+  gulp.watch('src/index.html',gulp.series('copy','reload'));
+  gulp.watch('src/common/include/header.inc',gulp.series('copy','reload'));
+  // css
+  gulp.watch('src/common/sass',gulp.series('sassCompile','cssMinimum','reload'));
+  // js
+  gulp.watch('src/common/scripts',gulp.series('webpackDevTask','reload'));
+}
+
+exports.default = gulp.parallel(gulp.series(clean,webpackDevTask,sassCompile,cssMinimum,copy,browserSyncFunc),watch);
+exports.build = gulp.series(clean,webpackProdTask,sassCompileBuild,cssMinimum,copy);
