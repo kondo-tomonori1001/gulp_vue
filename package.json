@@ -30,7 +30,8 @@
     "webpack-stream-watch": "^3.2.1"
   },
   "dependencies": {
-    "vue": "^2.6.12"
+    "vue": "^2.6.12",
+    "vue-router": "^3.5.1"
   },
   "browserslist": [
     "last 2 versions",

@@ -1,12 +1,10 @@
 <template>
-  <div>
-    <p>sampleApp</p>
-  </div>
+  <p>トップページ</p>
 </template>
 
 <script>
 export default {
-  
+
 }
 </script>
 

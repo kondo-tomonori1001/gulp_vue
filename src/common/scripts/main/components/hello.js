@@ -1,3 +1,3 @@
 export const hello = () => {
-  alert('hello world!22');
+  console.log('hello world!22');
 }
