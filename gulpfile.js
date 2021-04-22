@@ -105,6 +105,25 @@ function copy(){
 }
 exports.copy = copy;
 
+// ==== 画像圧縮 ====
+const imagemin = require('gulp-imagemin');
+const mozJpeg = require('imagemin-mozjpeg');
+const pngquant = require('imagemin-pngquant');
+
+function images(){
+  return(
+    gulp
+      .src(['src/**/*.+(jpg|jpeg|png|svg)','!src/**/fonts/*.svg'])
+      .pipe(imagemin([
+        mozJpeg(),
+        pngquant(),
+        imagemin.svgo(),
+      ]))
+      .pipe(gulp.dest('./dist/'))
+  )
+}
+exports.images = images;
+
 // ==== ローカルサーバー立ち上げ ====
 const browserSync = require('browser-sync').create(); 
 const connectSSI = require('connect-ssi');
@@ -148,5 +167,5 @@ function watch(){
   gulp.watch('src/common/scripts',gulp.series('webpackDevTask','reload'));
 }
 
-exports.default = gulp.parallel(gulp.series(clean,webpackDevTask,sassCompile,cssMinimum,copy,browserSyncFunc),watch);
-exports.build = gulp.series(clean,webpackProdTask,sassCompileBuild,cssMinimum,copy);
+exports.default = gulp.parallel(gulp.series(clean,webpackDevTask,sassCompile,cssMinimum,copy,images,browserSyncFunc),watch);
+exports.build = gulp.series(clean,webpackProdTask,sassCompileBuild,cssMinimum,copy,images);
